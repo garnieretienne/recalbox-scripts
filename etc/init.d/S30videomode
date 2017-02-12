@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Configure the device for HDMI or CRT output
+#
+
+start() {
+	echo "Configuring video mode"
+	videomode
+}
+
+stop() {
+  echo "I'm not a service"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	stop
+	start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
