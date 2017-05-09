@@ -1,5 +1,9 @@
 #!/bin/bash
 
+HDMI_GLOBAL_VIDEO_MODE="CEA 4 HDMI"
+HDMI_N64_VIDEO_MODE="CEA 1 HDMI"
+OVERSCAN_CONFIGS_PATH="/recalbox/share/system/configs"
+
 video_mode="unknown"
 
 get_video_mode() {
@@ -24,8 +28,7 @@ lock_boot_partition() {
 
 request_restart() {
   msg=$1
-  echo $msg
-  echo $msg > /tmp/restart_request
+  echo msg >> /tmp/restart_request
 }
 
 restart_if_requested() {
@@ -46,13 +49,10 @@ start_emulation_station() {
 disable_overscan() {
   cat /boot/config.txt | grep "disable_overscan\s*=\s*0" > /dev/null
   disable_overscan_flag=$?
-  cat /boot/config.txt | grep "overscan_scale\s*=\s*0" > /dev/null
-  overscan_scale_flag=$?
-  if [ $disable_overscan_flag -eq 0 ] || [ $overscan_scale_flag -eq 1 ]; then
+  if [ $disable_overscan_flag -eq 0 ]; then
     unlock_boot_partition
     echo "Disable overscan"
     sed -i "/^disable_overscan=/s/=.*/=1/" /boot/config.txt
-    sed -i "/^overscan_scale=/s/=.*/=0/" /boot/config.txt
     request_restart "Disabling overscan request a restart"
     lock_boot_partition
   else
@@ -63,13 +63,10 @@ disable_overscan() {
 enable_overscan() {
   cat /boot/config.txt | grep "disable_overscan\s*=\s*0" > /dev/null
   disable_overscan_flag=$?
-  cat /boot/config.txt | grep "overscan_scale\s*=\s*0" > /dev/null
-  overscan_scale_flag=$?
-  if [ $disable_overscan_flag -eq 1 ] || [ $overscan_scale_flag -eq 0 ]; then
+  if [ $disable_overscan_flag -eq 1 ]; then
     unlock_boot_partition
     echo "Enable overscan"
     sed -i "/^disable_overscan=/s/=.*/=0/" /boot/config.txt
-    sed -i "/^overscan_scale=/s/=.*/=1/" /boot/config.txt
     request_restart "Enabling overscan request a restart"
     lock_boot_partition
   else
@@ -77,11 +74,74 @@ enable_overscan() {
   fi
 }
 
+configure_overscan_values() {
+  overscan_top=$1
+  overscan_bottom=$2
+  overscan_left=$3
+  overscan_right=$4
+
+  unlock_boot_partition
+
+  cat /boot/config.txt | grep "overscan_top\s*=\s*$overscan_top" > /dev/null
+  if [ $? -eq 1 ]; then
+    sed -i "/^overscan_top=/s/=.*/=${overscan_top}/" /boot/config.txt
+    request_restart "Overscan top value updated"
+  fi
+
+  cat /boot/config.txt | \
+      grep "overscan_bottom\s*=\s*$overscan_bottom" > /dev/null
+  if [ $? -eq 1 ]; then
+    sed -i "/^overscan_bottom=/s/=.*/=${overscan_bottom}/" /boot/config.txt
+    request_restart "Overscan bottom value updated"
+  fi
+
+  cat /boot/config.txt | grep "overscan_left\s*=\s*$overscan_left" > /dev/null
+  if [ $? -eq 1 ]; then
+    sed -i "/^overscan_left=/s/=.*/=${overscan_left}/" /boot/config.txt
+    request_restart "Overscan left value updated"
+  fi
+
+  cat /boot/config.txt | grep "overscan_right\s*=\s*$overscan_right" > /dev/null
+  if [ $? -eq 1 ]; then
+    sed -i "/^overscan_right=/s/=.*/=${overscan_right}/" /boot/config.txt
+    request_restart "Overscan right value updated"
+  fi
+
+  lock_boot_partition
+}
+
+configure_overscan() {
+  config_file=""
+
+  case $video_mode in
+    "HDMI")
+      config_file="${OVERSCAN_CONFIGS_PATH}/overscan-HDMI.cfg"
+      tvservice --dumpedid /tmp/edid.dat &> /dev/null
+      md5=`md5sum /tmp/edid.dat | cut -d " " -f 1`
+      e_config_file="${OVERSCAN_CONFIGS_PATH}/overscan-${md5}.cfg"
+      if [ -f $e_config_file ]; then
+        config_file=$e_config_file
+      fi
+    ;;
+    "CRT")
+      config_file="${OVERSCAN_CONFIGS_PATH}/overscan-CRT.cfg"
+    ;;
+  esac
+
+  if [ -f $config_file ]; then
+    echo "Configuring overscan (${config_file}: `cat ${config_file}`)"
+    configure_overscan_values `cat ${config_file}`
+    enable_overscan
+  else
+    disable_overscan
+  fi
+}
+
 set_recalbox_video_mode_to_hdmi() {
-  echo "Set recalbox video mode to HDMI"
-  sed -i "/^global.videomode=/s/=.*/=CEA 4 HDMI/" \
+  echo "Set recalbox video mode to HDMI (${HDMI_GLOBAL_VIDEO_MODE})"
+  sed -i "/^global.videomode=/s/=.*/=${HDMI_GLOBAL_VIDEO_MODE}/" \
       /recalbox/share/system/recalbox.conf
-  sed -i "/^n64.videomode=/s/=.*/=CEA 1 HDMI/" \
+  sed -i "/^n64.videomode=/s/=.*/=${HDMI_N64_VIDEO_MODE}/" \
       /recalbox/share/system/recalbox.conf
 }
 
@@ -115,20 +175,18 @@ enable_retro_shader() {
 }
 
 get_video_mode
-kill_emulation_station_if_started
 case $video_mode in
   "HDMI")
-    disable_overscan
+    configure_overscan
     set_recalbox_video_mode_to_hdmi
     enable_game_smoothing
     enable_retro_shader
   ;;
   "CRT")
-    enable_overscan
+    configure_overscan
     set_recalbox_video_mode_to_crt
     disable_game_smoothing
     disable_retro_shader
   ;;
 esac
 restart_if_requested
-start_emulation_station

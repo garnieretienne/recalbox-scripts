@@ -1,0 +1,36 @@
+# Name of the recalbox kernel
+kernel=zImage
+
+# Let the TV time to initialize
+boot_delay=3
+
+# Set composite video to PAL/240p
+sdtv_mode=18
+
+# Use the alternative audio driver for composite audio
+audio_pwm_mode=2
+
+# Overscan
+disable_overscan=1
+overscan_left=26
+overscan_right=6
+overscan_top=-12
+overscan_bottom=-12
+
+# Default recalbox overclocking
+gpu_mem_256=128
+gpu_mem_512=256
+gpu_mem_1024=512
+
+# Added by NOOBS / Recalbox
+dtparam=audio=on
+arm_freq=1350
+core_freq=500
+sdram_freq=575
+force_turbo=0
+over_voltage=4
+over_voltage_sdram_p=6
+over_voltage_sdram_i=4
+over_voltage_sdram_c=4
+gpu_freq=500
+sdram_schmoo=0x02000020
