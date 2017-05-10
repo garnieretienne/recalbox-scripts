@@ -174,6 +174,12 @@ enable_retro_shader() {
       /recalbox/share/system/recalbox.conf
 }
 
+change_emulationstation_theme() {
+  theme=$1
+  sed -i "s#\(<string name=\"ThemeSet\" value=\"\).*\(\" />\)#\1${theme}\2#" \
+    /recalbox/share/system/.emulationstation/es_settings.cfg
+}
+
 get_video_mode
 case $video_mode in
   "HDMI")
@@ -181,12 +187,14 @@ case $video_mode in
     set_recalbox_video_mode_to_hdmi
     enable_game_smoothing
     enable_retro_shader
+    change_emulationstation_theme recalbox-240p
   ;;
   "CRT")
     configure_overscan
     set_recalbox_video_mode_to_crt
     disable_game_smoothing
     disable_retro_shader
+    change_emulationstation_theme recalbox
   ;;
 esac
 restart_if_requested
