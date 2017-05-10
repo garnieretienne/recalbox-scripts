@@ -166,12 +166,14 @@ enable_game_smoothing() {
 disable_retro_shader() {
   echo "Disable retro shaders"
   sed -i "/^global.shaderset=/s/=.*/=none/" /recalbox/share/system/recalbox.conf
+  sed -i "/^global.integerscale=/s/=.*/=0/" /recalbox/share/system/recalbox.conf
 }
 
 enable_retro_shader() {
   echo "Enable retro shaders"
   sed -i "/^global.shaderset=/s/=.*/=retro/" \
       /recalbox/share/system/recalbox.conf
+  sed -i "/^global.integerscale=/s/=.*/=1/" /recalbox/share/system/recalbox.conf
 }
 
 change_emulationstation_theme() {
@@ -187,14 +189,14 @@ case $video_mode in
     set_recalbox_video_mode_to_hdmi
     enable_game_smoothing
     enable_retro_shader
-    change_emulationstation_theme recalbox-240p
+    change_emulationstation_theme recalbox
   ;;
   "CRT")
     configure_overscan
     set_recalbox_video_mode_to_crt
     disable_game_smoothing
     disable_retro_shader
-    change_emulationstation_theme recalbox
+    change_emulationstation_theme recalbox-240p
   ;;
 esac
 restart_if_requested
