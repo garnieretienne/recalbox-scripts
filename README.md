@@ -24,3 +24,7 @@ wget https://github.com/raspberrypi/firmware/blob/stable/boot/bootcode.bin?raw=t
 wget https://github.com/raspberrypi/firmware/blob/stable/boot/start.elf?raw=true -O start.elf
 wget https://github.com/raspberrypi/firmware/blob/stable/boot/fixup.dat?raw=true -O fixup.dat
 ```
+
+## Enable the Playstation boot logo
+
+Quick menu => Options => Show Bios BootLogo
